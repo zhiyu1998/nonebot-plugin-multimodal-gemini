@@ -29,10 +29,10 @@ __plugin_meta__ = PluginMetadata(
         "  视频: .mp4, .mpeg, .mov, .avi, .flv, .mpg, .webm, .wmv, .3gpp\n"
         "  文档: .pdf, .js, .py, .txt, .html, .htm, .css, .md, .csv, .xml, .rtf"
     ),
-    extra={
-        "author": "zhiyu1998",
-        "version": "0.0.1",
-    },
+    type="application",
+    homepage="https://github.com/zhiyu1998/nonbot-plugin-multimodal-gemini",
+    config=Config,
+    supported_adapters={ "~onebot.v11" }
 )
 
 # 加载配置
