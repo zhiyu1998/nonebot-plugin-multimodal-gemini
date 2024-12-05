@@ -1,0 +1,9 @@
+from pydantic import BaseModel, Extra
+from typing import List
+
+
+class Config(BaseModel, extra=Extra.ignore):
+    # Gemini 配置
+    gm_api_key: str = ""  # Gemini API 密钥列表
+    gm_model: str = "gemini-1.5-flash"  # 默认模型名称
+    gm_prompt: str = "请用中文回答以下问题："  # 通用提示词
