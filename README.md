@@ -6,15 +6,15 @@
 
 <div align="center">
 
-# nonbot-plugin-multimodal-gemini
+# nonebot-plugin-multimodal-gemini
 
 _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！✨_
 
 <a href="./LICENSE">
-    <img src="https://img.shields.io/github/license/ownernonbot-plugin-multimodal-gemini.svg" alt="license">
+    <img src="https://img.shields.io/github/license/owner/nonebot-plugin-multimodal-gemini.svg" alt="license">
 </a>
-<a href="https://pypi.org/project/nonbot-plugin-multimodal-gemini/">
-    <img src="https://img.shields.io/pypi/v/nonbot-plugin-multimodal-gemini.svg" alt="pypi">
+<a href="https://pypi.org/project/nonebot-plugin-multimodal-gemini/">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-multimodal-gemini.svg" alt="pypi">
 </a>
 <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
 
@@ -26,7 +26,7 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 <summary>使用 nb-cli 安装</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-    nb plugin install nonbot-plugin-multimodal-gemini
+    nb plugin install nonebot-plugin-multimodal-gemini
 
 </details>
 
@@ -37,27 +37,27 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 <details>
 <summary>pip</summary>
 
-    pip install nonbot-plugin-multimodal-gemini
+    pip install nonebot-plugin-multimodal-gemini
 </details>
 <details>
 <summary>pdm</summary>
 
-    pdm add nonbot-plugin-multimodal-gemini
+    pdm add nonebot-plugin-multimodal-gemini
 </details>
 <details>
 <summary>poetry</summary>
 
-    poetry add nonbot-plugin-multimodal-gemini
+    poetry add nonebot-plugin-multimodal-gemini
 </details>
 <details>
 <summary>conda</summary>
 
-    conda install nonbot-plugin-multimodal-gemini
+    conda install nonebot-plugin-multimodal-gemini
 </details>
 
 打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
-    plugins = ["nonbot-plugin-multimodal-gemini"]
+    plugins = ["nonebot-plugin-multimodal-gemini"]
 
 </details>
 
