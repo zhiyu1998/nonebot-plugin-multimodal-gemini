@@ -5,7 +5,7 @@ description = "Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩
 authors = ["zhiyu1998 <renzhiyu0416@qq.com>"]
 readme = "README.md"
 packages = [{include = "nonebot-plugin-multimodal-gemini"}]
-repository = "https://github.com/zhiyu1998/nonebot-plugin-auto-sendlike"
+repository = "https://github.com/zhiyu1998/nonebot-plugin-multimodal-gemini"
 keywords = ["nonebot", "nonebot2", "gemini"]
 
 [tool.poetry.dependencies]
