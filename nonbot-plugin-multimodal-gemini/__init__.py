@@ -30,7 +30,7 @@ __plugin_meta__ = PluginMetadata(
         "  文档: .pdf, .js, .py, .txt, .html, .htm, .css, .md, .csv, .xml, .rtf"
     ),
     type="application",
-    homepage="https://github.com/zhiyu1998/nonbot-plugin-multimodal-gemini",
+    homepage="https://github.com/zhiyu1998/nonebot-plugin-multimodal-gemini",
     config=Config,
     supported_adapters={ "~onebot.v11" }
 )

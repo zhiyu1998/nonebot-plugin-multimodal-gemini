@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "nonbot-plugin-multimodal-gemini"
+name = "nonebot-plugin-multimodal-gemini"
 version = "0.0.1"
 description = "Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！"
 authors = ["zhiyu1998 <renzhiyu0416@qq.com>"]
 readme = "README.md"
-packages = [{include = "nonbot-plugin-multimodal-gemini"}]
+packages = [{include = "nonebot-plugin-multimodal-gemini"}]
 repository = "https://github.com/zhiyu1998/nonebot-plugin-auto-sendlike"
 keywords = ["nonebot", "nonebot2", "gemini"]
 
