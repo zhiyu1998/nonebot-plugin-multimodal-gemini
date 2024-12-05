@@ -17,8 +17,8 @@ from .config import Config
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
-    name="谷歌 Gemini",
-    description="谷歌 Gemini 多模态助手",
+    name="谷歌 Gemini 多模态助手",
+    description="Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！",
     usage=(
         "指令：\n"
         "(1) 多模态助手：[引用文件(可选)] + gemini + [问题(可选)]\n"
@@ -30,8 +30,8 @@ __plugin_meta__ = PluginMetadata(
         "  文档: .pdf, .js, .py, .txt, .html, .htm, .css, .md, .csv, .xml, .rtf"
     ),
     extra={
-        "author": "",
-        "version": "0.1.0",
+        "author": "zhiyu1998",
+        "version": "0.0.1",
     },
 )
 
