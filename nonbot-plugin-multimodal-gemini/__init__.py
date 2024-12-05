@@ -22,7 +22,7 @@ __plugin_meta__ = PluginMetadata(
     usage=(
         "指令：\n"
         "(1) 多模态助手：[引用文件(可选)] + gemini + [问题(可选)]\n"
-        "(2) 接地搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
+        "(2) llama搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
         "支持引用的文件格式有：\n"
         "  音频: .wav, .mp3, .aiff, .aac, .ogg, .flac\n"
         "  图片: .png, .jpeg, .jpg, .webp, .heic, .heif\n"
