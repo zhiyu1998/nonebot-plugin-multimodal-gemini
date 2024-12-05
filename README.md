@@ -78,4 +78,4 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 
 ### 效果图
 
-@todo
+![](https://s2.loli.net/2024/12/05/2toGhBxZLzeHk9V.png)
