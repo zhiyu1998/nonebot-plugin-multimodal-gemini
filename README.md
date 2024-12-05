@@ -10,6 +10,16 @@
 
 _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！✨_
 
+<a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/owner/nonebot-plugin-auto-sendlike.svg" alt="license">
+</a>
+<a href="https://pypi.python.org/pypi/nonebot-plugin-auto-sendlike">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-auto-sendlike.svg" alt="pypi">
+</a>
+<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
+
+</div>
+
 ## 💿 安装
 
 <details open>
