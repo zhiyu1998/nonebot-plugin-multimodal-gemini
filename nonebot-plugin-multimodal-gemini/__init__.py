@@ -30,22 +30,22 @@ from .config import Config
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
-    name="谷歌 Gemini",
-    description="谷歌 Gemini 多模态助手",
+    name="谷歌 Gemini 多模态助手",
+    description="Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！",
     usage=(
         "指令：\n"
         "(1) 多模态助手：[引用文件(可选)] + gemini + [问题(可选)]\n"
-        "(2) 接地搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
+        "(2) llama搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
         "支持引用的文件格式有：\n"
         "  音频: .wav, .mp3, .aiff, .aac, .ogg, .flac\n"
         "  图片: .png, .jpeg, .jpg, .webp, .heic, .heif\n"
         "  视频: .mp4, .mpeg, .mov, .avi, .flv, .mpg, .webm, .wmv, .3gpp\n"
         "  文档: .pdf, .js, .py, .txt, .html, .htm, .css, .md, .csv, .xml, .rtf"
     ),
-    extra={
-        "author": "",
-        "version": "0.1.0",
-    },
+    type="application",
+    homepage="https://github.com/zhiyu1998/nonebot-plugin-multimodal-gemini",
+    config=Config,
+    supported_adapters={ "~onebot.v11" }
 )
 
 # 加载配置
