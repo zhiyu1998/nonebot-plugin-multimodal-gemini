@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-multimodal-gemini"
-version = "0.0.3"
+version = "0.0.4"
 description = "Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！"
 authors = ["zhiyu1998 <renzhiyu0416@qq.com>"]
 readme = "README.md"

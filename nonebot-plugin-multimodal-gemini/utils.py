@@ -3,21 +3,23 @@ import os
 import re
 from pathlib import Path
 
+from nonebot import logger
+
 
 async def remove_file(file_path):
     """异步删除单个文件"""
     try:
         await asyncio.to_thread(os.remove, file_path)  # 使用 asyncio.to_thread 异步删除文件
-        print(f"已删除文件: {file_path}")
+        logger.info(f"已删除文件: {file_path}")
     except Exception as e:
-        print(f"文件删除失败 {file_path}: {e}")
+        logger.info(f"文件删除失败 {file_path}: {e}")
 
 
 async def remove_all_files_in_dir(directory):
     """异步删除目录中的所有文件"""
     dir_path = Path(directory)
     if not dir_path.is_dir():
-        print(f"{directory} 不是一个目录")
+        logger.info(f"{directory} 不是一个目录")
         return
 
     tasks = []
