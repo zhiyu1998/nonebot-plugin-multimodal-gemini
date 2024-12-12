@@ -3,36 +3,49 @@ import mimetypes
 from pathlib import Path
 from typing import List
 
+import aiohttp
+
+from .utils import remove_all_files_in_dir, contains_http_link
+
 import aiofiles
 import google.generativeai as genai
 import httpx
-from nonebot import on_command, get_plugin_config
+
+from nonebot import on_command, get_plugin_config, require
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, GroupMessageEvent
 from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import is_type
 
+require("nonebot_plugin_localstore")
+
+import nonebot_plugin_localstore as store
+
+require("nonebot_plugin_apscheduler")
+
+from nonebot_plugin_apscheduler import scheduler
+
 from .config import Config
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
-    name="谷歌 Gemini 多模态助手",
-    description="Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 的多模态！",
+    name="谷歌 Gemini",
+    description="谷歌 Gemini 多模态助手",
     usage=(
         "指令：\n"
         "(1) 多模态助手：[引用文件(可选)] + gemini + [问题(可选)]\n"
-        "(2) llama搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
+        "(2) 接地搜索：gemini搜索 + [问题]（测试功能尚未生效）\n\n"
         "支持引用的文件格式有：\n"
         "  音频: .wav, .mp3, .aiff, .aac, .ogg, .flac\n"
         "  图片: .png, .jpeg, .jpg, .webp, .heic, .heif\n"
         "  视频: .mp4, .mpeg, .mov, .avi, .flv, .mpg, .webm, .wmv, .3gpp\n"
         "  文档: .pdf, .js, .py, .txt, .html, .htm, .css, .md, .csv, .xml, .rtf"
     ),
-    type="application",
-    homepage="https://github.com/zhiyu1998/nonebot-plugin-multimodal-gemini",
-    config=Config,
-    supported_adapters={ "~onebot.v11" }
+    extra={
+        "author": "",
+        "version": "0.1.0",
+    },
 )
 
 # 加载配置
@@ -47,7 +60,7 @@ genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel(MODEL_NAME)
 
 # 注册指令
-gemini = on_command("gemini", priority=5, rule=is_type(GroupMessageEvent), block=True)
+gemini = on_command("gemini", aliases=set("Gemini"), priority=5, rule=is_type(GroupMessageEvent), block=True)
 
 
 # 处理多模态内容或文本问题
@@ -56,7 +69,7 @@ async def chat(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     query = args.extract_plain_text().strip()
     url, msg_type, file_id = await auto_get_url(bot, event)
     logger.info(f"链接{url}，类型{msg_type}，文件ID{file_id}")
-    if url is not '' and msg_type is not 'text':
+    if url != '' and msg_type != 'text':
         # 下载文件到本地
         local_path = await download_file(url, msg_type, file_id)
         completion: str = await fetch_gemini_req(query, local_path)
@@ -65,8 +78,54 @@ async def chat(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     if msg_type == "text":
         query += f"引用：{url}"
 
+    if query.startswith("搜索") or contains_http_link(query):
+        search_ans = await gemini_search_extend(query)
+        await gemini.finish(search_ans, reply_message=True)
+
     completion: str = await fetch_gemini_req(query)
     await gemini.finish(Message(completion), reply_message=True)
+
+
+async def gemini_search_extend(query: str) -> str | None:
+    """
+        Gemini 的搜索扩展
+    :param query:
+    :return:
+    """
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={API_KEY}"
+    logger.debug(url)
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    { "text": PROMPT },
+                    { "text": query }
+                ]
+            }
+        ],
+        "tools": [
+            {
+                "googleSearch": { }
+            }
+        ]
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    timeout = aiohttp.ClientTimeout(total=100)
+
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.post(url, json=payload, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                ans = data.get("candidates", [{ }])[0].get("content", { }).get("parts", [{ }])[0].get("text")
+            else:
+                ans = None
+
+    return ans
 
 
 async def auto_get_url(bot: Bot, event: MessageEvent):
@@ -91,7 +150,7 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
                 url = file_url_info["url"]
                 # 调用 handle_file_or_image 处理引用内容
                 return url, msg_type, file_id
-        if url is '':
+        if url == '':
             url = reply.message.extract_plain_text()
             return url, 'text', ''
     else:
@@ -101,7 +160,7 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
 async def fetch_gemini_req(query: str | List[str], file_path='') -> str:
     content_list = [PROMPT, query] if file_path == '' else [PROMPT, query, to_gemini_init_data(file_path)]
 
-    response = model.generate_content(content_list)
+    response = await model.generate_content_async(content_list)
     return response.text
 
 
@@ -121,7 +180,7 @@ def to_gemini_init_data(file_path):
 async def download_file(url: str, file_type: str, file_id: str) -> str:
     try:
         # 创建保存文件的目录
-        local_dir = Path("temp")
+        local_dir = store.get_plugin_data_file("tmp")
         local_dir.mkdir(parents=True, exist_ok=True)
 
         # 提取文件名
@@ -155,3 +214,13 @@ async def download_file(url: str, file_type: str, file_id: str) -> str:
     except Exception as e:
         logger.error(f"下载文件时出错：{e}")
         raise
+
+
+@scheduler.scheduled_job('cron', hour=8, id="job_gemini_clean_tmps")
+async def clean_gemini_tmps():
+    """
+    每日清理 Gemini 临时文件
+    :return: None
+    """
+    local_dir = store.get_plugin_data_file("tmp")
+    await remove_all_files_in_dir(local_dir)
