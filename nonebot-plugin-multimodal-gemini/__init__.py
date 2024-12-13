@@ -66,7 +66,7 @@ gemini = on_command("gemini", aliases=set("Gemini"), priority=5, rule=is_type(Gr
 async def chat(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     query = args.extract_plain_text().strip()
     file_list, text_data = await auto_get_url(bot, event)
-    logger.info(f"引用文件列表{file_list}，引用文字内容{text_data}")
+    # logger.info(f"引用文件列表{file_list}，引用文字内容{text_data}")
     if file_list:
         completion: str = await fetch_gemini_req(query, file_list)
         await gemini.finish(Message(completion), reply_message=True)
