@@ -65,17 +65,14 @@ gemini = on_command("gemini", aliases=set("Gemini"), priority=5, rule=is_type(Gr
 @gemini.handle()
 async def chat(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     query = args.extract_plain_text().strip()
-    url, msg_type, file_id = await auto_get_url(bot, event)
-    logger.info(f"链接{url}，类型{msg_type}，文件ID{file_id}")
-    if url != '' and msg_type != 'text':
-        # 下载文件到本地
-        local_path = await download_file(url, msg_type, file_id)
-        completion: str = await fetch_gemini_req(query, local_path)
+    file_list, text_data = await auto_get_url(bot, event)
+    logger.info(f"引用文件列表{file_list}，引用文字内容{text_data}")
+    if file_list:
+        completion: str = await fetch_gemini_req(query, file_list)
         await gemini.finish(Message(completion), reply_message=True)
     # 如果只是文字
-    if msg_type == "text":
-        query += f"引用：{url}"
-
+    elif text_data:
+        query += f"引用：{text_data}"
     if query.startswith("搜索") or contains_http_link(query):
         search_ans = await gemini_search_extend(query)
         await gemini.finish(search_ans, reply_message=True)
@@ -129,9 +126,10 @@ async def gemini_search_extend(query: str) -> str | None:
 async def auto_get_url(bot: Bot, event: MessageEvent):
     # 判断是否存在回复
     reply = event.reply
+    file_list = []
+    text_data = ""
     if reply:
         # logger.info(reply)
-        url = ''
         for segment in reply.message:
             msg_type = segment.type  # 消息类型
             msg_data = segment.data  # 消息内容
@@ -139,35 +137,37 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
             if msg_type in ["image", "audio", "video"]:
                 url = msg_data.get("url") or msg_data.get("file_url")  # 提取视频或图片的 URL
                 file_id = msg_data.get("file") or msg_data.get("file_id")
-                # 调用 handle_file_or_image 处理引用内容
-                return url, msg_type, file_id
+                # 将文件转换为base64
+                local_path = await download_file(url, msg_type, file_id)
+                file_data = await to_gemini_init_data(local_path)
+                file_list.append(file_data)
             elif msg_type == "file":
                 file_id = msg_data.get("file_id")
                 file_url_info = await bot.call_api("get_group_file_url", file_id=file_id,
                                                    group_id=event.group_id)  # 提取文件的 URL
                 url = file_url_info["url"]
-                # 调用 handle_file_or_image 处理引用内容
-                return url, msg_type, file_id
-        if url == '':
-            url = reply.message.extract_plain_text()
-            return url, 'text', ''
-    else:
-        return "", "", None
+                # 将文件转换为base64
+                local_path = await download_file(url, msg_type, file_id)
+                file_data = await to_gemini_init_data(local_path)
+                file_list.append(file_data)
+            else :
+                text_data = reply.message.extract_plain_text()
+    return file_list, text_data
 
 
-async def fetch_gemini_req(query: str | List[str], file_path='') -> str:
-    content_list = [PROMPT, query] if file_path == '' else [PROMPT, query, to_gemini_init_data(file_path)]
+async def fetch_gemini_req(query: str | List[str], file_list = []) -> str:
+    content_list = [PROMPT, query] if file_list == [] else [PROMPT, query] + file_list
 
     response = await model.generate_content_async(content_list)
     return response.text
 
 
-def to_gemini_init_data(file_path):
+async def to_gemini_init_data(file_path):
     # 获取文件的 MIME 类型
     mime_type = mimetypes.guess_type(file_path)[0]
-    with open(file_path, 'rb') as f:
+    async with aiofiles.open(file_path, 'rb') as f:
         # 读取文件内容
-        data = f.read()
+        data = await f.read()
         # 返回正确格式的字典
         return {
             'mime_type': mime_type,
