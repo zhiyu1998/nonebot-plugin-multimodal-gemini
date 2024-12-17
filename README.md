@@ -79,3 +79,11 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 ### 效果图
 
 ![](https://s2.loli.net/2024/12/05/2toGhBxZLzeHk9V.png)
+
+## 🌼 贡献
+
+同时感谢以下开发者对 `Nonebot - Gemini 多模态助手` 作出的贡献：
+
+<a href="https://github.com/zhiyu1998/nonebot-plugin-multimodal-gemini/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=zhiyu1998/nonebot-plugin-multimodal-gemini&max=1000" />
+</a>
