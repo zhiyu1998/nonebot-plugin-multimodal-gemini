@@ -58,7 +58,7 @@ genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel(MODEL_NAME)
 
 # 注册指令
-gemini = on_command("gemini", aliases=set("Gemini"), priority=5, rule=is_type(GroupMessageEvent), block=True)
+gemini = on_command("gemini", aliases={"Gemini"}, priority=5, rule=is_type(GroupMessageEvent), block=True)
 
 
 # 处理多模态内容或文本问题
@@ -152,6 +152,16 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
                 file_list.append(file_data)
             else :
                 text_data = reply.message.extract_plain_text()
+    else:
+        for segment in event.message:
+            # 处理消息中携带图片
+            if segment.type == "image":
+                img_data = segment.data
+                file_id = img_data.get("file") or img_data.get("file_id")
+                url = img_data.get("url") or img_data.get("file_url")
+                local_path = await download_file(url, segment.type, file_id)
+                file_data = await to_gemini_init_data(local_path)
+                file_list.append(file_data)
     return file_list, text_data
 
 
