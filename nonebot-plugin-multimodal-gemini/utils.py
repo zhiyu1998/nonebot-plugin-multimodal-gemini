@@ -2,9 +2,12 @@ import asyncio
 import os
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 from nonebot import logger
-
+from crawl4ai import AsyncWebCrawler, CacheMode
+from crawl4ai.content_filter_strategy import BM25ContentFilter
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 async def remove_file(file_path):
     """异步删除单个文件"""
@@ -38,12 +41,63 @@ def contains_http_link(input_string):
         input_string (str): 要检查的字符串。
 
     返回值:
-        bool: 如果字符串中包含 HTTP/HTTPS 链接，返回 True；否则返回 False。
+        str: 如果字符串中包含 HTTP/HTTPS 链接，返回 url；否则返回 ""。
     """
     # 定义一个正则表达式模式，用于匹配 HTTP/HTTPS 链接
-    pattern = r'http[s]?://\S+'
+    pattern = r'https?://[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+'
 
     # 使用 re.search 查找匹配项
-    if re.search(pattern, input_string):
-        return True
-    return False
+    url = re.search(pattern, input_string)
+    if url:
+        return url.group()
+    return ""
+
+
+async def crawl_url_content(url: str) -> str:
+    async with AsyncWebCrawler(
+            browser_type="chromium",
+            verbose=True,
+            headless=True,
+    ) as crawler:
+        try:
+            result = await crawler.arun(
+                url=url,
+                cach_mode=CacheMode.ENABLED,
+                markdown_generator=DefaultMarkdownGenerator(
+                    content_filter=BM25ContentFilter(user_query=None, bm25_threshold=1.5)
+                ),
+                exclude_external_images=True,
+                excluded_tags=['script', 'style', 'iframe', 'form', 'nav']
+            )
+            if result.success:
+                return result.markdown_v2.raw_markdown
+            else:
+                return "爬取失败，无法获取页面内容。"
+        except Exception as e:
+            return f"爬取过程中发生错误：{str(e)}"
+
+
+async def crawl_search_keyword(keyword: str) -> str:
+    safe_keyword = quote(keyword.replace("搜索", ""))
+    search_url = f"https://www.baidu.com/s?wd={safe_keyword}"
+    async with AsyncWebCrawler(
+            browser_type="chromium",
+            verbose=True,
+            headless=True,
+    ) as crawler:
+        try:
+            result = await crawler.arun(
+                url=search_url,
+                cach_mode=CacheMode.DISABLED,
+                markdown_generator=DefaultMarkdownGenerator(
+                    content_filter=BM25ContentFilter(user_query=keyword, bm25_threshold=1.0)
+                ),
+                exclude_external_images=True,
+                excluded_tags=['script', 'style', 'iframe', 'form', 'nav']
+            )
+            if result.success:
+                return result.markdown_v2.raw_markdown
+            else:
+                return "搜索失败，无法获取相关结果。"
+        except Exception as e:
+            return f"搜索过程中发生错误：{str(e)}"

@@ -61,6 +61,9 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 
 </details>
 
+> [!IMPORTANT]
+> 请确保已安装可用的浏览器, 如有关于缺失浏览器的报错, 请尝试进入Bot虚拟环境 (如果有) 并运行`playwright install`命令
+
 ## ⚙️ 配置
 
 | 配置项 | 必填 | 默认值 |       说明       |

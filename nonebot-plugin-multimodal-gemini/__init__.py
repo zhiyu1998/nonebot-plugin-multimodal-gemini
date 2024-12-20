@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import List
 
 import aiofiles
-import aiohttp
 import google.generativeai as genai
 import httpx
 from nonebot import on_command, get_plugin_config, require
@@ -14,7 +13,7 @@ from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import is_type
 
-from .utils import remove_all_files_in_dir, contains_http_link
+from .utils import remove_all_files_in_dir, contains_http_link, crawl_url_content, crawl_search_keyword
 
 require("nonebot_plugin_localstore")
 
@@ -73,54 +72,14 @@ async def chat(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     # 如果只是文字
     elif text_data:
         query += f"引用：{text_data}"
-    if query.startswith("搜索") or contains_http_link(query):
-        search_ans = await gemini_search_extend(query)
-        await gemini.finish(search_ans, reply_message=True)
-
+    if query.startswith("搜索"):
+        search_ans = await crawl_search_keyword(query)
+        query = f"用户的问题是：{query}，以下是用户关键词的搜索结果：\n{search_ans}"
+    elif url := contains_http_link(query):
+        url_ans = await crawl_url_content(url)
+        query = f"用户的问题是：{query}，以下是用户提供的链接内容摘要：\n{url_ans}"
     completion: str = await fetch_gemini_req(query)
     await gemini.finish(Message(completion), reply_message=True)
-
-
-async def gemini_search_extend(query: str) -> str | None:
-    """
-        Gemini 的搜索扩展
-    :param query:
-    :return:
-    """
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={API_KEY}"
-    logger.debug(url)
-
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    { "text": PROMPT },
-                    { "text": query }
-                ]
-            }
-        ],
-        "tools": [
-            {
-                "googleSearch": { }
-            }
-        ]
-    }
-
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    timeout = aiohttp.ClientTimeout(total=100)
-
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.post(url, json=payload, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                ans = data.get("candidates", [{ }])[0].get("content", { }).get("parts", [{ }])[0].get("text")
-            else:
-                ans = None
-
-    return ans
 
 
 async def auto_get_url(bot: Bot, event: MessageEvent):
