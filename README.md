@@ -71,6 +71,11 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 | gm_api_key | 是 | 无 | [Gemini API Key](https://aistudio.google.com/app/apikey?) |
 | gm_model | 否 | gemini-2.0-flash-exp |   Gemini 模型    |
 | gm_prompt | 否 | 请用中文回答以下问题： |      提示词（不要设置太长）       |
+| gm_proxy | 否 | 无 |      插件使用的代理地址，格式为`http://<ip>:<port>`       |
+| gm_search | 否 | True |      是否启用Gemini附带搜索       |
+
+> [!NOTE]
+> Gemini附带搜索功能需使用gemini-2.0-flash-exp模型, 非此模型将默认使用LLM爬虫搜索
 
 ## 🎉 使用
 
