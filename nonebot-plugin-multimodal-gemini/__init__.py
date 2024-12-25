@@ -166,8 +166,10 @@ async def fetch_gemini_req(query: str, file_list: List[Dict] = []) -> str:
     content_list = [PROMPT, query] if file_list == [] else [PROMPT, query, *file_list]
     response = await model.generate_content_async(content_list)
     if old_http_proxy is None and old_https_proxy is None:
-        del os.environ["HTTP_PROXY"]
-        del os.environ["HTTPS_PROXY"]
+        if "HTTP_PROXY" in os.environ:
+            del os.environ["HTTP_PROXY"]
+        if "HTTPS_PROXY" in os.environ:
+            del os.environ["HTTPS_PROXY"]
     return response.text
 
 
