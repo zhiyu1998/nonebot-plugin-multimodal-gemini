@@ -75,7 +75,7 @@ _✨Nonebot2 的谷歌 Gemini 多模态助手，一个命令即可玩转 Gemini 
 | gm_search | 否 | True |      是否启用Gemini附带搜索       |
 
 > [!NOTE]
-> Gemini附带搜索功能需使用gemini-2.0-flash-exp模型, 非此模型将默认使用LLM爬虫搜索
+> Gemini附带搜索功能需使用gemini-2.0系列模型, 非此模型将默认使用LLM爬虫搜索
 
 ## 🎉 使用
 
