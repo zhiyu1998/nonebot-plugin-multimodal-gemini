@@ -1,3 +1,4 @@
+import json
 import mimetypes
 import os
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import List  # noqa: UP035
 from urllib.parse import quote
 
 import aiofiles
+import filetype
 import httpx
 from google import genai
 from google.genai import types
@@ -120,14 +122,30 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
         if reply:
             # logger.info(reply)
             for segment in reply.message:
-                msg_type = segment.type  # 消息类型
-                msg_data = segment.data  # 消息内容
+                msg_type = segment.type
+                msg_data = segment.data
                 # 根据消息类型处理
-                if msg_type in ["image", "audio", "video"]:
-                    url = msg_data.get("url") or msg_data.get("file_url")  # 提取视频或图片的 URL
+                if msg_type in ["image", "audio"]:
+                    url = msg_data.get("url") or msg_data.get("file_url")
                     file_id = msg_data.get("file") or msg_data.get("file_id")
                     # 将文件转换为base64
                     local_path = await download_file(url, msg_type, file_id)  # type: ignore
+                    file_data = await to_gemini_init_data(local_path)
+                    file_list.append(file_data)
+                elif msg_type == "video":
+                    url = msg_data.get("url") or msg_data.get("file_url")
+                    file_id = msg_data.get("file") or msg_data.get("file_id")
+                    # 将文件转换为base64
+                    if url.startswith("http://") or url.startswith("https://"):  # type: ignore
+                        local_path = await download_file(url, msg_type, file_id)  # type: ignore
+                    else:
+                        video_url_info = await bot.call_api(
+                            "get_group_file_url",
+                            file_id=msg_data.get("file_id"),
+                            group_id=event.group_id,  # type: ignore
+                        )
+                        url = video_url_info["url"]
+                        local_path = await download_file(url, msg_type, file_id)  # type: ignore
                     file_data = await to_gemini_init_data(local_path)
                     file_list.append(file_data)
                 elif msg_type == "file":
@@ -169,10 +187,32 @@ async def auto_get_url(bot: Bot, event: MessageEvent):
                             elif msg_type_segment == "text":
                                 text_data += f"{msg_data_segment.get('text').strip()}，"
                 elif msg_type == "json":
-                    msg_data_json = eval(msg_data["data"])
-                    msg_json_data = msg_data_json.get("meta").get("detail").get("news")
-                    for msg_json in msg_json_data:
-                        text_data = text_data + f"{msg_json.get('text', '').strip()},"
+                    msg_data_json = json.loads(msg_data["data"])
+                    msg_data_real = await bot.get_forward_msg(id=msg_data_json.get("meta").get("detail").get("resid"))
+                    for messages in msg_data_real["messages"]:
+                        for message in messages["message"]:
+                            message_type_real = message.get("type")
+                            message_data_real = message.get("data")
+                            if message_type_real == "image":
+                                url = message_data_real.get("url") or message_data_real.get("file_url")
+                                file_id = message_data_real.get("file") or message_data_real.get("file_id")
+                                local_path = await download_file(url, message_type_real, file_id)  # type: ignore
+                                file_data = await to_gemini_init_data(local_path)
+                                file_list.append(file_data)
+                            elif message_type_real == "file":
+                                file_id = message_data_real.get("file_id")
+                                file_url_info = await bot.call_api(
+                                    "get_group_file_url",
+                                    file_id=file_id,
+                                    group_id=event.group_id,  # type: ignore
+                                )
+                                url = file_url_info["url"]
+                                file_name = message_data_real.get("file")
+                                local_path = await download_file(url, message_type_real, file_name)  # type: ignore
+                                file_data = await to_gemini_init_data(local_path)
+                                file_list.append(file_data)
+                            elif message_type_real == "text":
+                                text_data += f"{message_data_real.get('text').strip()}，"
                 else:
                     text_data = reply.message.extract_plain_text()
         else:
@@ -273,19 +313,22 @@ async def download_file(url: str, file_type: str, file_name: str) -> str:
         local_dir = store.get_plugin_data_file("tmp")
         local_dir.mkdir(parents=True, exist_ok=True)
 
-        # 提取文件名
-        if "." in file_name:
-            base_name, ext_file_id = file_name.rsplit(".", 1)  # 分离文件名和后缀
-            simplified_file_id = base_name[:8]  # 截取文件名的前 8 位
-
         # 使用 httpx 异步下载文件
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
-            response.raise_for_status()  # 检查 HTTP 状态码
+            response.raise_for_status()
+
+            # 提取文件名
+            if "." in file_name:
+                base_name, ext_file_id = file_name.rsplit(".", 1)
+                simplified_file_id = base_name[:8]
+            else:
+                simplified_file_id = file_name[:8]
+                ext_file_id = filetype.guess_extension(response.content)
 
             # 安全文件名处理
-            ext = f".{ext_file_id}"  # type: ignore
-            name = "".join(c if c.isalnum() or c in "-_." else "_" for c in Path(simplified_file_id).stem)  # type: ignore
+            ext = f".{ext_file_id}"
+            name = "".join(c if c.isalnum() or c in "-_." else "_" for c in Path(simplified_file_id).stem)
             safe_filename = f"{file_type}_{name}{ext}"
 
             # 生成文件保存路径
